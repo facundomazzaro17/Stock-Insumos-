@@ -5,7 +5,7 @@ st.set_page_config(page_title="Control de Insumos", layout="wide")
 
 # --- CONFIGURACIÓN ---
 # PEGA ACÁ EL LINK QUE COPIASTE EN EL PASO 1 (EL DEL CSV)
-URL_SHEETS = https://docs.google.com/spreadsheets/d/e/2PACX-1vQtpcWfHUopX22hA6rg-Q2MdmO1ryrp3ZL0JX__XSvFcZX2MBoOvjDaWVxBxnC5r5ArQ_ZVkbsb3yiR/pub?output=csv
+URL_SHEETS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtpcWfHUopX22hA6rg-Q2MdmO1ryrp3ZL0JX__XSvFcZX2MBoOvjDaWVxBxnC5r5ArQ_ZVkbsb3yiR/pub?output=csv"
 
 @st.cache_data(ttl=60) # Se actualiza cada 1 minuto
 def cargar_datos():
