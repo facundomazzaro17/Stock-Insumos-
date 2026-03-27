@@ -1,65 +1,56 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Control de Insumos", layout="wide")
+st.set_page_config(page_title="Gestión de Insumos", layout="wide")
 
-# --- CONFIGURACIÓN ---
-# PEGA ACÁ EL LINK QUE COPIASTE EN EL PASO 1 (EL DEL CSV)
-URL_SHEETS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtpcWfHUopX22hA6rg-Q2MdmO1ryrp3ZL0JX__XSvFcZX2MBoOvjDaWVxBxnC5r5ArQ_ZVkbsb3yiR/pub?output=csv"
+# --- CONFIGURACIÓN DE LINKS ---
+URL_SALDOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMypw6QM6exXIVOGtCdfJEUTMw9vQ7PrAsX1um9zGMTv88i7obR-4EerL7n86BfwxZkZ_1Wa0MB9l1/pub?gid=10065180&single=true&output=csv"
+URL_MOVIMIENTOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMypw6QM6exXIVOGtCdfJEUTMw9vQ7PrAsX1um9zGMTv88i7obR-4EerL7n86BfwxZkZ_1Wa0MB9l1/pub?gid=0&single=true&output=csv"
 
-@st.cache_data(ttl=60) # Se actualiza cada 1 minuto
-def cargar_datos():
-    df = pd.read_csv(URL_SHEETS)
-    return df
+@st.cache_data(ttl=60)
+def cargar_datos(url):
+    return pd.read_csv(url)
 
-st.title("📦 Panel de Control de Insumos")
+# --- MENÚ LATERAL ---
+st.sidebar.title("Navegación")
+opcion = st.sidebar.radio("Ir a:", ["📦 Stock Actual", "🕒 Historial de Movimientos"])
 
-try:
-    df = cargar_datos()
-    
-    # --- LÓGICA PARA PROCESAR TUS COLUMNAS REPETIDAS ---
-    # Esto busca todas las columnas que digan "Producto" y "Cantidad"
-    prod_cols = [c for c in df.columns if 'Producto' in c]
-    cant_cols = [c for c in df.columns if 'Cantidad' in c]
-    
-    movimientos = []
-    
-    for _, fila in df.iterrows():
-        for p_col, c_col in zip(prod_cols, cant_cols):
-            producto = fila[p_col]
-            cantidad = fila[c_col]
+# --- VISTA 1: STOCK ACTUAL ---
+if opcion == "📦 Stock Actual":
+    st.title("📊 Estado de Inventario por Plaza")
+    try:
+        df_saldos = cargar_datos(URL_SALDOS)
+        # Limpieza rápida de columnas
+        df_saldos.columns = [c.strip() for c in df_saldos.columns]
+        
+        # Filtro de Plaza
+        plaza_col = 'PLAZA' # Cambiá esto si tu columna se llama "Sucursal" o "Ubicación"
+        if plaza_col in df_saldos.columns:
+            lista_plazas = ["Todas"] + list(df_saldos[plaza_col].unique())
+            sel_plaza = st.selectbox("Filtrar por Plaza:", lista_plazas)
             
-            if pd.notna(producto) and pd.notna(cantidad):
-                # Si salió de una plaza, es resta
-                if pd.notna(fila['SALIDA']):
-                    movimientos.append({'Plaza': fila['SALIDA'], 'Producto': producto, 'Cantidad': -cantidad})
-                # Si entró a una plaza, es suma
-                if pd.notna(fila['ENTRADA']):
-                    movimientos.append({'Plaza': fila['ENTRADA'], 'Producto': producto, 'Cantidad': cantidad})
+            if sel_plaza != "Todas":
+                df_saldos = df_saldos[df_saldos[plaza_col] == sel_plaza]
+        
+        st.dataframe(df_saldos, use_container_width=True, hide_index=True)
+        
+    except Exception as e:
+        st.error("Error cargando los saldos. Revisá el Link A.")
 
-    df_movs = pd.DataFrame(movimientos)
-    
-    # --- CÁLCULO DE STOCK ACTUAL ---
-    stock_total = df_movs.groupby(['Plaza', 'Producto'])['Cantidad'].sum().reset_index()
-
-    # --- INTERFAZ ---
-    plaza_sel = st.selectbox("Seleccioná una Plaza:", stock_total['Plaza'].unique())
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader(f"Stock Actual en {plaza_sel}")
-        resumen = stock_total[stock_total['Plaza'] == plaza_sel]
-        st.dataframe(resumen[['Producto', 'Cantidad']], use_container_width=True)
-
-    with col2:
-        st.subheader("Alertas de Stock Bajo")
-        bajo = resumen[resumen['Cantidad'] < 5] # Podés cambiar este número
-        if not bajo.empty:
-            st.error("¡Atención! Reponer los siguientes insumos:")
-            st.table(bajo)
-        else:
-            st.success("Todo en orden. Stock suficiente.")
-
-except Exception as e:
-    st.warning("Configurando conexión... Asegurate de pegar el link del Sheets en el código.")
+# --- VISTA 2: HISTORIAL ---
+elif opcion == "🕒 Historial de Movimientos":
+    st.title("📝 Registro Detallado de Movimientos")
+    try:
+        df_movs = cargar_datos(URL_MOVIMIENTOS)
+        
+        # Buscador de texto
+        busqueda = st.text_input("🔍 Buscar por producto, comentario o plaza:")
+        if busqueda:
+            # Filtra en todo el documento si el texto aparece en cualquier celda
+            df_movs = df_movs[df_movs.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
+        
+        st.write(f"Mostrando {len(df_movs)} registros encontrados:")
+        st.dataframe(df_movs, use_container_width=True, hide_index=True)
+        
+    except Exception as e:
+        st.error("Error cargando los movimientos. Revisá el Link B.")
