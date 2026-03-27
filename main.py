@@ -39,19 +39,19 @@ if opcion == "📦 Stock Actual":
         with tab1:
             st.subheader("Resumen de Entradas por Plaza")
             # Ajustamos el rango: Columna 0 (Producto) + Columnas 1 a 11 (Entradas)
-            df_entradas = df_saldos.iloc[:, [0] + list(range(1, 11))]
+            df_entradas = df_saldos.iloc[:, [0] + list(range(1, 26))]
             st.dataframe(df_entradas, use_container_width=True, hide_index=True)
 
         with tab2:
             st.subheader("Resumen de Salidas por Plaza")
             # Ajustamos el rango: Columna 0 (Producto) + Columnas 11 a 21 (Salidas)
-            df_salidas = df_saldos.iloc[:, [0] + list(range(11, 21))]
+            df_salidas = df_saldos.iloc[:, [0] + list(range(28, 53))]
             st.dataframe(df_salidas, use_container_width=True, hide_index=True)
 
         with tab3:
             st.subheader("Saldos Actuales Disponibles")
             # Ajustamos el rango: Columna 0 (Producto) + Columna 21 hasta el final
-            df_real = df_saldos.iloc[:, [0] + list(range(21, len(df_saldos.columns)))]
+            df_real = df_saldos.iloc[:, [0] + list(range(55, len(df_saldos.columns)))]
             
             # Formato condicional: Stock 0 o menos en rojo
             def resaltar_negativo(val):
