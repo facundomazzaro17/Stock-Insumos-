@@ -33,25 +33,25 @@ if opcion == "📦 Stock Actual":
         df_saldos = cargar_datos(URL_SALDOS)
         df_saldos.columns = [c.strip() for c in df_saldos.columns]
 
-        # --- CREACIÓN DE PESTAÑAS PARA SEPARAR TABLAS ---
-        tab1, tab2, tab3 = st.tabs(["📥 Entradas Totales", "📤 Salidas Totales", "⚖️ Stock Real (Saldos)"])
+        # --- CREACIÓN DE PESTAÑAS ---
+        tab1, tab2, tab3 = st.tabs(["📥 Entradas (C-AB)", "📤 Salidas (AD-BC)", "⚖️ Stock Real (BE-CD)"])
 
         with tab1:
             st.subheader("Resumen de Entradas por Plaza")
-            # Ajustamos el rango: Columna 0 (Producto) + Columnas 1 a 11 (Entradas)
-            df_entradas = df_saldos.iloc[:, [0] + list(range(1, 26))]
+            # Columna 1 (Nombre Producto) + Columnas 2 a 27 (C a AB)
+            df_entradas = df_saldos.iloc[:, [1] + list(range(2, 28))]
             st.dataframe(df_entradas, use_container_width=True, hide_index=True)
 
         with tab2:
             st.subheader("Resumen de Salidas por Plaza")
-            # Ajustamos el rango: Columna 0 (Producto) + Columnas 11 a 21 (Salidas)
-            df_salidas = df_saldos.iloc[:, [0] + list(range(28, 53))]
+            # Columna 1 (Nombre Producto) + Columnas 29 a 54 (AD a BC)
+            df_salidas = df_saldos.iloc[:, [1] + list(range(29, 55))]
             st.dataframe(df_salidas, use_container_width=True, hide_index=True)
 
         with tab3:
             st.subheader("Saldos Actuales Disponibles")
-            # Ajustamos el rango: Columna 0 (Producto) + Columna 21 hasta el final
-            df_real = df_saldos.iloc[:, [0] + list(range(55, len(df_saldos.columns)))]
+            # Columna 1 (Nombre Producto) + Columnas 56 a 81 (BE a CD)
+            df_real = df_saldos.iloc[:, [1] + list(range(56, 82))]
             
             # Formato condicional: Stock 0 o menos en rojo
             def resaltar_negativo(val):
@@ -60,9 +60,9 @@ if opcion == "📦 Stock Actual":
                 except: return ''
             
             st.dataframe(df_real.style.applymap(resaltar_negativo), use_container_width=True, hide_index=True)
-        
+
     except Exception as e:
-        st.error("Error cargando los saldos. Revisá el Link A.")
+        st.error(f"Error cargando los saldos: {e}")
 
 # --- VISTA 2: HISTORIAL ---
 elif opcion == "🕒 Historial de Movimientos":
