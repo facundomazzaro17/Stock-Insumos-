@@ -9,8 +9,19 @@ URL_MOVIMIENTOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMypw6QM6exX
 
 @st.cache_data(ttl=60)
 def cargar_datos(url):
-    return pd.read_csv(url)
-
+    # Si el link es el de SALDOS (Stock Actual), aplicamos la limpieza de filas
+    if url == URL_SALDOS:
+        df = pd.read_csv(url, skiprows=2)
+        df = df.dropna(axis=1, how='all')
+        if 'Unnamed: 1' in df.columns:
+            df = df.rename(columns={'Unnamed: 1': 'PRODUCTO'})
+        if 'Unnamed: 0' in df.columns:
+            df = df.drop(columns=['Unnamed: 0'])
+        return df
+    else:
+        # Si es el de MOVIMIENTOS, lo cargamos normal
+        return pd.read_csv(url)
+        
 # --- MENÚ LATERAL ---
 st.sidebar.title("Navegación")
 opcion = st.sidebar.radio("Ir a:", ["📦 Stock Actual", "🕒 Historial de Movimientos"])
