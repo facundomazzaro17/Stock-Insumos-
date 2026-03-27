@@ -28,22 +28,38 @@ opcion = st.sidebar.radio("Ir a:", ["📦 Stock Actual", "🕒 Historial de Movi
 
 # --- VISTA 1: STOCK ACTUAL ---
 if opcion == "📦 Stock Actual":
-    st.title("📊 Estado de Inventario por Plaza")
+    st.title("📊 Estado de Inventario")
     try:
         df_saldos = cargar_datos(URL_SALDOS)
-        # Limpieza rápida de columnas
         df_saldos.columns = [c.strip() for c in df_saldos.columns]
-        
-        # Filtro de Plaza
-        plaza_col = 'PLAZA' # Cambiá esto si tu columna se llama "Sucursal" o "Ubicación"
-        if plaza_col in df_saldos.columns:
-            lista_plazas = ["Todas"] + list(df_saldos[plaza_col].unique())
-            sel_plaza = st.selectbox("Filtrar por Plaza:", lista_plazas)
+
+        # --- CREACIÓN DE PESTAÑAS PARA SEPARAR TABLAS ---
+        tab1, tab2, tab3 = st.tabs(["📥 Entradas Totales", "📤 Salidas Totales", "⚖️ Stock Real (Saldos)"])
+
+        with tab1:
+            st.subheader("Resumen de Entradas por Plaza")
+            # Ajustamos el rango: Columna 0 (Producto) + Columnas 1 a 11 (Entradas)
+            df_entradas = df_saldos.iloc[:, [0] + list(range(1, 11))]
+            st.dataframe(df_entradas, use_container_width=True, hide_index=True)
+
+        with tab2:
+            st.subheader("Resumen de Salidas por Plaza")
+            # Ajustamos el rango: Columna 0 (Producto) + Columnas 11 a 21 (Salidas)
+            df_salidas = df_saldos.iloc[:, [0] + list(range(11, 21))]
+            st.dataframe(df_salidas, use_container_width=True, hide_index=True)
+
+        with tab3:
+            st.subheader("Saldos Actuales Disponibles")
+            # Ajustamos el rango: Columna 0 (Producto) + Columna 21 hasta el final
+            df_real = df_saldos.iloc[:, [0] + list(range(21, len(df_saldos.columns)))]
             
-            if sel_plaza != "Todas":
-                df_saldos = df_saldos[df_saldos[plaza_col] == sel_plaza]
-        
-        st.dataframe(df_saldos, use_container_width=True, hide_index=True)
+            # Formato condicional: Stock 0 o menos en rojo
+            def resaltar_negativo(val):
+                try:
+                    return 'color: red; font-weight: bold' if float(val) <= 0 else ''
+                except: return ''
+            
+            st.dataframe(df_real.style.applymap(resaltar_negativo), use_container_width=True, hide_index=True)
         
     except Exception as e:
         st.error("Error cargando los saldos. Revisá el Link A.")
